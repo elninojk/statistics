@@ -1,7 +1,7 @@
-package com.n26.statistics.controllers;
+package com.n26.statistics.dto;
 
 
-public class Statistics {
+public class StatisticsDto {
 	
 	private Double sum;
 	private Double avg;
@@ -9,10 +9,10 @@ public class Statistics {
 	private Double min;
 	private Long count;
 	
-	public Statistics() {
+	public StatisticsDto() {
 		super();
 	}
-	public Statistics(Double sum, Double avg, Double max, Double min, Long count) {
+	public StatisticsDto(Double sum, Double avg, Double max, Double min, Long count) {
 		super();
 		this.sum = sum;
 		this.avg = avg;

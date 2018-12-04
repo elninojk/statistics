@@ -1,67 +1,57 @@
 package com.n26.statistics.service;
 
+import java.util.ArrayList;
 import java.util.DoubleSummaryStatistics;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.n26.statistics.controllers.Statistics;
-import com.n26.statistics.controllers.Transaction;
-import com.n26.statistics.controllers.TransactionInvalidException;
+import com.n26.statistics.dto.StatisticsDto;
+import com.n26.statistics.dto.TransactionDto;
+import com.n26.statistics.exceptions.TransactionInvalidException;
 
 @Service
 public class StatsService {
-	
+
 	@Value("${statsBasedOnSeconds}")
-    private long statsBasedOnSeconds;
-	private static final Queue<Transaction> TRANSACTION_QUEUE = new PriorityQueue<>();
-	private Statistics stats;
+	private long statsBasedOnSeconds;
+	private static final List<TransactionDto> TRANSACTION_LIST = new ArrayList<>();
+	private StatisticsDto stats;
 	private Object lock = new Object();
-	
-	public Statistics getStats()
-	{
+
+	public StatisticsDto getStats() {
 		return stats;
 	}
-	
-	public void addTransacation(Transaction transaction) throws TransactionInvalidException
-	{
-		if((System.currentTimeMillis()  -transaction.getTimeStamp()) >statsBasedOnSeconds)
-		{
+
+	public void addTransacation(TransactionDto transaction) {
+		if ((System.currentTimeMillis() - transaction.getTimeStamp()) > statsBasedOnSeconds) {
 			throw new TransactionInvalidException();
 		}
-		
+
 		synchronized (lock) {
-			TRANSACTION_QUEUE.add(transaction);
+			TRANSACTION_LIST.add(transaction);
+			calculateStats();
 		}
-		
-		
+
 	}
-	
-	private void clearOld()
-	{
-		synchronized (lock) {
-			TRANSACTION_QUEUE.removeIf(transcation -> (System.currentTimeMillis() -transcation.getTimeStamp()) >statsBasedOnSeconds );
-		}
-		
-	}
-	
-	@Async
-	public void calculateStats()
-	{
-		DoubleSummaryStatistics  stat =TRANSACTION_QUEUE.stream().mapToDouble(value -> value.getAmount()).summaryStatistics();
-		stats = new Statistics(stat.getSum(), stat.getAverage(), stat.getMax(), stat.getMin(), stat.getCount());
-	}
-	
+
 	@Scheduled(fixedRate = 60000, initialDelay = 5000)
-	public void generateReports()
-	{
-		clearOld();
-		calculateStats();
+	public void clearOld() {
+		synchronized (lock) {
+			TRANSACTION_LIST.removeIf(
+					transcation -> (System.currentTimeMillis() - transcation.getTimeStamp()) > statsBasedOnSeconds);
+			calculateStats();
+		}
 	}
-	
+
+	@Async
+	public void calculateStats() {
+		DoubleSummaryStatistics stat = TRANSACTION_LIST.stream().mapToDouble(TransactionDto::getAmount)
+				.summaryStatistics();
+		stats = new StatisticsDto(stat.getSum(), stat.getAverage(), stat.getMax(), stat.getMin(), stat.getCount());
+	}
+
 }
