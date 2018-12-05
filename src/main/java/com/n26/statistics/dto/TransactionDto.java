@@ -1,14 +1,15 @@
-package com.n26.statistics.controllers;
+package com.n26.statistics.dto;
 
-public class Transaction{
+public class TransactionDto {
 
 	Double amount;
 	Long timeStamp;
-	public Transaction(double amount, long timeStamp) {
+
+	public TransactionDto(double amount, long timeStamp) {
 		this.amount = amount;
 		this.timeStamp = timeStamp;
 	}
-	
+
 	public Double getAmount() {
 		return amount;
 	}

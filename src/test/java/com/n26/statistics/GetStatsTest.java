@@ -3,99 +3,59 @@
  */
 package com.n26.statistics;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-import java.util.PriorityQueue;
-import java.util.Queue;
-
-import static com.jayway.restassured.RestAssured.*;
-import static com.jayway.restassured.matcher.RestAssuredMatchers.*;
-import static org.hamcrest.Matchers.*;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.jayway.restassured.RestAssured;
-import com.jayway.restassured.response.Response;
-import com.jayway.restassured.specification.RequestSpecification;
-import com.n26.statistics.controllers.Transaction;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.n26.statistics.dto.StatisticsDto;
+import com.n26.statistics.dto.TransactionDto;
 
 /**
  * @author jerilkuruvila
  *
  */
-@RunWith(SpringRunner.class)
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public class GetStatsTest {
 
-	private static RequestSpecification request;
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-		RestAssured.baseURI ="http://localhost:8080";
-		request = RestAssured.given();
-	}
+	@Value("${statsBasedOnSeconds}")
+	private long statsBasedOnSeconds;
 
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@Before
-	public void setUp() throws Exception {
-	}
-
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@After
-	public void tearDown() throws Exception {
-	}
+	@Autowired
+	private TestRestTemplate restTemplate;
 
 	@Test
-	public void test() throws JSONException {
-		Queue<Transaction> transactions = new PriorityQueue<>();
-		transactions.add(new Transaction(100, System.currentTimeMillis()));
-		for(Transaction tra: transactions)
-		{
-			JSONObject obj = new JSONObject();
-			obj.put("amount",tra.getAmount());
-			obj.put("timeStamp",tra.getTimeStamp());
-			request.body(obj.toString());
-			
-			request.header("Content-Type", "application/json");
-			Response response = request.post("/transactions");
-		}
-		get("/statistics").then().assertThat().body("sum", equalTo("100.0"));
+	public void test() throws JsonProcessingException, Exception {
+		assertEquals(HttpStatus.NO_CONTENT,
+				restTemplate.postForEntity("/transactions",
+						new TransactionDto(100, System.currentTimeMillis() - (statsBasedOnSeconds + 100)), Object.class)
+						.getStatusCode());
+		ResponseEntity<Object> res = restTemplate.postForEntity("/transactions",
+				new TransactionDto(100, System.currentTimeMillis()), Object.class);
+		assertEquals(HttpStatus.CREATED, res.getStatusCode());
+		assertEquals(Double.valueOf("100"),
+				restTemplate.getForEntity("/statistics", StatisticsDto.class).getBody().getSum());
 	}
 
-	
-	//Check for O(1) post
+	// Check for O(1) post
 	// Check for O(1) get
-	
-	//give old value and check
-	//give correct value and check
-	
-	//give a lot of correct and wrong 
-	
-	//post
-	
-	//get
-	
-	//check sum,avg,max,min,count
-	
+
+	// give a lot of correct and wrong
+
+	// post
+
+	// get
+
+	// check sum,avg,max,min,count
+
 }
