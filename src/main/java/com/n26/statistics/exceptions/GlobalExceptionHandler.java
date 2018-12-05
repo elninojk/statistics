@@ -10,6 +10,6 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(TransactionInvalidException.class)
 	public ResponseEntity<Object> handleTransactionInvalidException(TransactionInvalidException exception) {
-		return new ResponseEntity<>("Old Transaction",HttpStatus.NO_CONTENT);
+		return new ResponseEntity<>("Old Transaction", HttpStatus.NO_CONTENT);
 	}
 }

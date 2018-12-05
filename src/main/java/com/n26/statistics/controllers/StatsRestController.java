@@ -16,7 +16,7 @@ import com.n26.statistics.service.StatsService;
 public class StatsRestController {
 
 	@Autowired
-	StatsService service;
+	private StatsService service;
 
 	@GetMapping("/statistics")
 	@ResponseStatus(HttpStatus.OK)
@@ -28,10 +28,8 @@ public class StatsRestController {
 	@PostMapping("/transactions")
 	@ResponseStatus(HttpStatus.CREATED)
 	public void addTransaction(@RequestBody TransactionDto transaction) {
-
 		// O(1) since just adding transaction to queue;
 		// calculateStats is async to guarantee O(1)
 		service.addTransacation(transaction);
 	}
-
 }
